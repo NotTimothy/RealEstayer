@@ -82,7 +82,11 @@ while flag:
 
 
 for place in places:
+    time.sleep(10)
+
     browser.get(place)
+
+    time.sleep(10)
 
     info_about_airbnb = browser.find_elements(By.CLASS_NAME, "l7n4lsf")
     is_a_favorite = browser.find_element(By.CLASS_NAME, "lbjrbi0")
