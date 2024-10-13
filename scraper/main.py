@@ -4,9 +4,12 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 
+import db
+
 count = 0
 flag = True
 places = []
+urls = []
 
 browser = webdriver.Chrome()
 browser.get('https://www.airbnb.com/s/Lake-Superior--MN--USA/homes?tab_id=home_tab&refinement_paths%5B%5D=%2Fhomes&flexible_trip_lengths%5B%5D=one_week&monthly_start_date=2024-08-01&monthly_length=3&monthly_end_date=2024-11-01&price_filter_input_type=0&channel=EXPLORE&date_picker_type=calendar&query=Lake%20Superior%2C%20MN&place_id=ChIJzV1LHgfwpVIRmrBTDYA1Jio&location_bb=QkDSv8K2Cp5CO4YVwrgYpw%3D%3D&adults=3&source=structured_search_input_header&search_type=autocomplete_click')
@@ -91,6 +94,10 @@ for place in places:
     info_about_airbnb = browser.find_elements(By.CLASS_NAME, "l7n4lsf")
     is_a_favorite = browser.find_element(By.CLASS_NAME, "lbjrbi0")
     show_more = browser.find_elements(By.CLASS_NAME, "atm_7l_dezgoh_1w3cfyq")
+
+    urls.append(browser.current_url)
+
+db.insert_many_into_collection(places)
 
 
 
