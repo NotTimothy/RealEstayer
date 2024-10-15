@@ -6,15 +6,16 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 import db
 import logging
+from flask import Flask, request, jsonify
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+app = Flask(__name__)
+
 
 def initialize_browser():
     browser = webdriver.Chrome()
-    url = 'https://www.airbnb.com/s/Lake-Superior--MN--USA/homes?tab_id=home_tab&refinement_paths%5B%5D=%2Fhomes&flexible_trip_lengths%5B%5D=one_week&monthly_start_date=2024-08-01&monthly_length=3&monthly_end_date=2024-11-01&price_filter_input_type=0&channel=EXPLORE&date_picker_type=calendar&query=Lake%20Superior%2C%20MN&place_id=ChIJzV1LHgfwpVIRmrBTDYA1Jio&location_bb=QkDSv8K2Cp5CO4YVwrgYpw%3D%3D&adults=3&source=structured_search_input_header&search_type=autocomplete_click'
-    browser.get(url)
     return browser
 
 
@@ -44,8 +45,11 @@ def get_attribute_or_empty(browser, by, value, attribute):
         return ""
 
 
-def get_place_urls(browser):
+def get_place_urls(browser, location):
     urls = set()
+    base_url = f'https://www.airbnb.com/s/{location}/homes?tab_id=home_tab&refinement_paths%5B%5D=%2Fhomes&flexible_trip_lengths%5B%5D=one_week&monthly_start_date=2024-11-01&monthly_length=3&monthly_end_date=2025-02-01&price_filter_input_type=0&channel=EXPLORE&date_picker_type=flexible_dates&source=structured_search_input_header&search_type=autocomplete_click&query={location}'
+    browser.get(base_url)
+
     while True:
         places_to_stay = wait_for_elements(browser, By.CLASS_NAME, "atm_7l_1j28jx2")
         for place in places_to_stay:
@@ -86,19 +90,29 @@ def scrape_place_details(browser, url):
     return place
 
 
-def main():
+@app.route('/city-data', methods=['GET'])
+def get_city_data():
+    city = request.args.get('city')
+    if not city:
+        return jsonify({"error": "City parameter is required"}), 400
+
     browser = initialize_browser()
-    place_urls = get_place_urls(browser)
+    try:
+        place_urls = get_place_urls(browser, city)
+        place_details = []
+        for url in place_urls[:10]:  # Limit to 10 places for demonstration
+            details = scrape_place_details(browser, url)
+            place_details.append(details)
 
-    place_details = []
-    for url in place_urls:
-        details = scrape_place_details(browser, url)
-        place_details.append(details)
+        db.insert_many_into_collection(place_details)
 
-    db.insert_many_into_collection(place_details)
-
-    browser.quit()
+        return jsonify({
+            "city": city,
+            "places": place_details
+        })
+    finally:
+        browser.quit()
 
 
 if __name__ == "__main__":
-    main()
+    app.run(debug=True)
