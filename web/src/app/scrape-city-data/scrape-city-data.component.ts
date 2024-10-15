@@ -5,17 +5,16 @@ import { NgIf, NgFor } from "@angular/common";
 import { HttpClientModule } from '@angular/common/http';
 
 @Component({
-  selector: 'app-city-data',
+  selector: 'app-scrape-city-data',
   standalone: true,
   imports: [NgIf, NgFor, FormsModule, HttpClientModule],
-  providers: [CityDataService, HttpClientModule],
   template: `
     <div>
-      <h2>Airbnb Listings Lookup</h2>
+      <h2>Scrape Airbnb Listings</h2>
       <input [(ngModel)]="cityName" placeholder="Enter city name">
-      <button (click)="getCityData()">Get Data</button>
+      <button (click)="scrapeCityData()">Scrape Data</button>
       <div *ngIf="cityData">
-        <h3>Listings in {{ cityData.city }}</h3>
+        <h3>Scraped Listings in {{ cityData.city }}</h3>
         <div *ngFor="let place of cityData.places">
           <h4>{{ place.title }}</h4>
           <p>Price: {{ place.price }}</p>
@@ -26,20 +25,20 @@ import { HttpClientModule } from '@angular/common/http';
     </div>
   `
 })
-export class CityDataComponent {
+export class ScrapeCityDataComponent {
   cityName: string = '';
   cityData: any;
 
   constructor(private cityDataService: CityDataService) {}
 
-  getCityData() {
+  scrapeCityData() {
     if (this.cityName) {
-      this.cityDataService.getCityData(this.cityName).subscribe(
+      this.cityDataService.scrapeCityData(this.cityName).subscribe(
         data => {
           this.cityData = data;
         },
         error => {
-          console.error('Error fetching city data:', error);
+          console.error('Error scraping city data:', error);
           // Handle error (e.g., show error message to user)
         }
       );

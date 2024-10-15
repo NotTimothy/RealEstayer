@@ -1,0 +1,20 @@
+<main class="main-content">
+  <div class="container">
+    <h1>Welcome to RealEstayer</h1>
+    <div class="search-bar">
+      <input type="text" placeholder="Search for a place..." class="search-input">
+      <button class="search-button">Search</button>
+    </div>
+    <div class="listings">
+      <div class="listing-card" *ngFor="let listing of listings">
+        <img [src]="listing.picture_url" alt="Listing image" class="listing-image">
+        <div class="listing-details">
+          <h2 class="listing-title">{{ listing.title }}</h2>
+          <p class="listing-location">{{ listing.location }}</p>
+          <p class="listing-price">{{ listing.price }} total</p>
+          <a [href]="listing.url" target="_blank">View on Airbnb</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>

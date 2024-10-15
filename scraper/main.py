@@ -7,23 +7,30 @@ from selenium.common.exceptions import TimeoutException, NoSuchElementException
 import db
 import logging
 from flask import Flask, request, jsonify
+from bson.json_util import dumps
+import json
+from flask_cors import CORS
+import re
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 app = Flask(__name__)
+CORS(app)  # This will enable CORS for all routes
 
+
+# Database configuration
+DB_NAME = "airbnb"
+COLLECTION_NAME = "listings"
 
 def initialize_browser():
     browser = webdriver.Chrome()
     return browser
 
-
 def wait_for_elements(browser, by, value, timeout=10):
     return WebDriverWait(browser, timeout).until(
         EC.presence_of_all_elements_located((by, value))
     )
-
 
 def get_text_or_empty(browser, by, value):
     try:
@@ -34,6 +41,20 @@ def get_text_or_empty(browser, by, value):
     except (TimeoutException, NoSuchElementException):
         return ""
 
+def get_price(browser, by, value):
+    try:
+        elements = WebDriverWait(browser, 10).until(
+            EC.presence_of_all_elements_located((by, value))
+        )
+
+        for element in elements:
+            if '$' in element.text:
+                return element.text.strip()
+
+        return ""  # Return empty string if no element with '$' is found
+    except (TimeoutException, NoSuchElementException):
+        logging.error(f"Error finding price elements: {by}, {value}")
+        return ""
 
 def get_attribute_or_empty(browser, by, value, attribute):
     try:
@@ -43,7 +64,6 @@ def get_attribute_or_empty(browser, by, value, attribute):
         return element.get_attribute(attribute)
     except (TimeoutException, NoSuchElementException):
         return ""
-
 
 def get_place_urls(browser, location):
     urls = set()
@@ -71,7 +91,6 @@ def get_place_urls(browser, location):
 
     return list(urls)
 
-
 def scrape_place_details(browser, url):
     browser.get(url)
     time.sleep(5)
@@ -81,16 +100,16 @@ def scrape_place_details(browser, url):
         "title": get_text_or_empty(browser, By.TAG_NAME, "h1"),
         "picture_url": get_attribute_or_empty(browser, By.CLASS_NAME, "itu7ddv", "src"),
         "description": get_text_or_empty(browser, By.CLASS_NAME, "l1h825yc"),
-        "price": get_text_or_empty(browser, By.CLASS_NAME, "_tyxjp1"),
+        "price": get_price(browser, By.CLASS_NAME, "_j1kt73"),
         "rating": get_text_or_empty(browser, By.CLASS_NAME, "r1dxllyb"),
+        "location": get_text_or_empty(browser, By.CLASS_NAME, "_152qbzi"),
         "amenities": [amenity.text for amenity in browser.find_elements(By.CLASS_NAME, "l7n4lsf")]
     }
 
     logging.info(f"Scraped details for: {place['title']}")
     return place
 
-
-@app.route('/city-data', methods=['GET'])
+@app.route('/scrape-city-data', methods=['GET'])
 def get_city_data():
     city = request.args.get('city')
     if not city:
@@ -100,18 +119,48 @@ def get_city_data():
     try:
         place_urls = get_place_urls(browser, city)
         place_details = []
-        for url in place_urls[:10]:  # Limit to 10 places for demonstration
+        # Change when done making changes
+        for url in place_urls: # [:10]:  # Limit to 10 places for demonstration
             details = scrape_place_details(browser, url)
             place_details.append(details)
 
-        db.insert_many_into_collection(place_details)
+        inserted_ids = db.insert_many_into_collection(place_details)
 
         return jsonify({
             "city": city,
-            "places": place_details
+            "places": json.loads(dumps(place_details)),
+            "inserted_ids": inserted_ids
         })
     finally:
         browser.quit()
+
+
+@app.route('/get-listings', methods=['GET'])
+def get_listings():
+    city = request.args.get('city')
+    limit = int(request.args.get('limit', 10))
+
+    query = {"city": city} if city else {}
+
+    try:
+        listings = db.get_listings(DB_NAME, COLLECTION_NAME, query, limit)
+        return jsonify(listings)
+    except Exception as e:
+        logging.error(f"An error occurred while fetching listings: {e}")
+        return jsonify({"error": "Failed to fetch listings"}), 500
+
+
+@app.route('/get-listing/<listing_id>', methods=['GET'])
+def get_listing(listing_id):
+    try:
+        listing = db.get_listing_by_id(DB_NAME, COLLECTION_NAME, listing_id)
+        if listing:
+            return jsonify(listing)
+        else:
+            return jsonify({"error": "Listing not found"}), 404
+    except Exception as e:
+        logging.error(f"An error occurred while fetching the listing: {e}")
+        return jsonify({"error": "Failed to fetch the listing"}), 500
 
 
 if __name__ == "__main__":
