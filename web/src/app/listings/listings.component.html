@@ -2,19 +2,32 @@
   <div class="container">
     <h1>Welcome to RealEstayer</h1>
     <div class="search-bar">
-      <input type="text" placeholder="Search for a place..." class="search-input">
-      <button class="search-button">Search</button>
+      <input type="text" [(ngModel)]="searchTerm" placeholder="Search for a place, region, or country..." class="search-input">
+      <button (click)="onSearch()" class="search-button">Search</button>
     </div>
-    <div class="listings">
-      <div class="listing-card" *ngFor="let listing of listings">
-        <img [src]="listing.picture_url" alt="Listing image" class="listing-image">
-        <div class="listing-details">
-          <h2 class="listing-title">{{ listing.title }}</h2>
-          <p class="listing-location">{{ listing.location }}</p>
-          <p class="listing-price">{{ listing.price }} total</p>
-          <a [href]="listing.url" target="_blank">View on Airbnb</a>
+    <div *ngIf="scrapeMessage" class="scrape-message">{{ scrapeMessage }}</div>
+    <div *ngIf="hasSearched">
+      <div *ngIf="listings.length > 0; else noResults" class="listings">
+        <div class="listing-card" *ngFor="let listing of listings">
+          <img [src]="listing.picture_url" alt="Listing image" class="listing-image">
+          <div class="listing-details">
+            <h2 class="listing-title">{{ listing.title }}</h2>
+            <p class="listing-location">{{ listing.location }}</p>
+            <p class="listing-region">{{ listing.region }}, {{ listing.country }}</p>
+            <p class="listing-price">{{ listing.price }} total</p>
+            <div class="listing-features" *ngIf="listing.features && listing.features.length > 0">
+              <h3>Amenities:</h3>
+              <ul>
+                <li *ngFor="let feature of listing.features">{{ feature }}</li>
+              </ul>
+            </div>
+            <a [href]="listing.url" target="_blank">View on Airbnb</a>
+          </div>
         </div>
       </div>
+      <ng-template #noResults>
+        <p>No results found for "{{ searchTerm }}". Please try another search.</p>
+      </ng-template>
     </div>
   </div>
 </main>

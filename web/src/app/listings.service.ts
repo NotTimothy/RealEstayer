@@ -1,4 +1,3 @@
-// listing.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -7,15 +6,19 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class ListingService {
-  private apiUrl = 'http://localhost:5000/get-listings';  // Adjust this URL as needed
+  private apiUrl = 'http://localhost:5000';  // Adjust this URL as needed
 
   constructor(private http: HttpClient) {}
 
-  getListings(city?: string): Observable<any> {
-    let url = this.apiUrl;
-    if (city) {
-      url += `?city=${encodeURIComponent(city)}`;
+  getListings(searchTerm?: string): Observable<any> {
+    let url = `${this.apiUrl}/get-listings`;
+    if (searchTerm) {
+      url += `?city=${encodeURIComponent(searchTerm)}`;
     }
     return this.http.get(url);
+  }
+
+  scrapeNorthAmerica(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/scrape-north-america`);
   }
 }

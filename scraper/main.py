@@ -3,7 +3,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException, NoSuchElementException
+from selenium.common.exceptions import TimeoutException, NoSuchElementException, ElementClickInterceptedException
 import db
 import logging
 from flask import Flask, request, jsonify
@@ -22,6 +22,23 @@ CORS(app)  # This will enable CORS for all routes
 # Database configuration
 DB_NAME = "airbnb"
 COLLECTION_NAME = "listings"
+
+# List of Canadian provinces and territories
+CANADIAN_PROVINCES = [
+    "Alberta", "British Columbia", "Manitoba", "New Brunswick", "Newfoundland and Labrador",
+    "Northwest Territories", "Nova Scotia", "Nunavut", "Ontario", "Prince Edward Island",
+    "Quebec", "Saskatchewan", "Yukon"
+]
+
+# List of US states
+US_STATES = [
+    "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "Florida",
+    "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine",
+    "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska",
+    "Nevada", "New Hampshire", "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio",
+    "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas",
+    "Utah", "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"
+]
 
 def initialize_browser():
     browser = webdriver.Chrome()
@@ -91,9 +108,55 @@ def get_place_urls(browser, location):
 
     return list(urls)
 
+
+def close_modal(browser):
+    try:
+        close_button = WebDriverWait(browser, 5).until(
+            EC.element_to_be_clickable((By.XPATH, "//button[@aria-label='Close']"))
+        )
+        close_button.click()
+        time.sleep(1)
+        logging.info("Successfully closed modal")
+    except (TimeoutException, NoSuchElementException):
+        logging.info("No modal found to close")
+
+def click_show_all_amenities(browser):
+    try:
+        # Close any open modals first
+        close_modal(browser)
+
+        # Wait for the button to be clickable
+        button = WebDriverWait(browser, 10).until(
+            EC.element_to_be_clickable((By.XPATH, "//button[contains(., 'Show all') and contains(., 'amenities')]"))
+        )
+        # Scroll the button into view
+        browser.execute_script("arguments[0].scrollIntoView(true);", button)
+        # Wait a bit for any animations to finish
+        time.sleep(1)
+        # Try to click the button using JavaScript
+        browser.execute_script("arguments[0].click();", button)
+        # Wait for the modal to appear
+        WebDriverWait(browser, 10).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "twad414"))
+        )
+        logging.info("Successfully clicked 'Show all amenities' button")
+        return True
+    except (TimeoutException, NoSuchElementException, ElementClickInterceptedException) as e:
+        logging.warning(f"Failed to click 'Show all amenities' button: {e}")
+        return False
+
+def scrape_features(browser):
+    # Try to click the "Show all amenities" button
+    if click_show_all_amenities(browser):
+        # If successful, scrape features from the modal
+        return [feature.text for feature in browser.find_elements(By.CLASS_NAME, "twad414")]
+    else:
+        # If unsuccessful, try to scrape features from the main page
+        return [feature.text for feature in browser.find_elements(By.XPATH, "//div[contains(@class, 'amenities')]//div[contains(@class, 'title')]")]
+
 def scrape_place_details(browser, url):
     browser.get(url)
-    time.sleep(5)
+    time.sleep(5)  # Wait for page to load
 
     place = {
         "url": url,
@@ -103,11 +166,28 @@ def scrape_place_details(browser, url):
         "price": get_price(browser, By.CLASS_NAME, "_j1kt73"),
         "rating": get_text_or_empty(browser, By.CLASS_NAME, "r1dxllyb"),
         "location": get_text_or_empty(browser, By.CLASS_NAME, "_152qbzi"),
-        "amenities": [amenity.text for amenity in browser.find_elements(By.CLASS_NAME, "l7n4lsf")]
     }
+
+    # Scrape the features
+    place["features"] = scrape_features(browser)
 
     logging.info(f"Scraped details for: {place['title']}")
     return place
+
+def scrape_region(browser, regions, country):
+    all_listings = []
+    for region in regions:
+        logging.info(f"Scraping listings for {region}, {country}")
+        place_urls = get_place_urls(browser, f"{region}, {country}")
+        region_listings = []
+        for url in place_urls[:5]:  # Limit to 5 listings per region for demonstration
+            details = scrape_place_details(browser, url)
+            details['region'] = region
+            details['country'] = country
+            region_listings.append(details)
+        all_listings.extend(region_listings)
+        logging.info(f"Scraped {len(region_listings)} listings for {region}, {country}")
+    return all_listings
 
 @app.route('/scrape-city-data', methods=['GET'])
 def get_city_data():
@@ -120,7 +200,7 @@ def get_city_data():
         place_urls = get_place_urls(browser, city)
         place_details = []
         # Change when done making changes
-        for url in place_urls: # [:10]:  # Limit to 10 places for demonstration
+        for url in place_urls[:1]: # [:10]:  # Limit to 10 places for demonstration
             details = scrape_place_details(browser, url)
             place_details.append(details)
 
@@ -134,13 +214,43 @@ def get_city_data():
     finally:
         browser.quit()
 
+@app.route('/scrape-north-america', methods=['GET'])
+def scrape_north_america():
+    browser = initialize_browser()
+    try:
+        all_listings = []
+
+        # Scrape Canadian provinces
+        canada_listings = scrape_region(browser, CANADIAN_PROVINCES, "Canada")
+        all_listings.extend(canada_listings)
+
+        # Scrape US states
+        us_listings = scrape_region(browser, US_STATES, "USA")
+        all_listings.extend(us_listings)
+
+        inserted_ids = db.insert_many_into_collection(all_listings)
+        return jsonify({
+            "message": "Scraping completed",
+            "total_listings": len(all_listings),
+            "canada_listings": len(canada_listings),
+            "us_listings": len(us_listings),
+            "inserted_ids": inserted_ids
+        })
+    except Exception as e:
+        logging.error(f"An error occurred while scraping: {e}")
+        return jsonify({"error": "Failed to scrape listings"}), 500
+    finally:
+        browser.quit()
 
 @app.route('/get-listings', methods=['GET'])
 def get_listings():
     city = request.args.get('city')
-    limit = int(request.args.get('limit', 10))
+    limit = int(request.args.get('limit', 0))
 
-    query = {"city": city} if city else {}
+    query = {}
+    if city:
+        # Use a case-insensitive regex to match the city name
+        query["location"] = {"$regex": city, "$options": "i"}
 
     try:
         listings = db.get_listings(DB_NAME, COLLECTION_NAME, query, limit)
@@ -161,7 +271,6 @@ def get_listing(listing_id):
     except Exception as e:
         logging.error(f"An error occurred while fetching the listing: {e}")
         return jsonify({"error": "Failed to fetch the listing"}), 500
-
 
 if __name__ == "__main__":
     app.run(debug=True)

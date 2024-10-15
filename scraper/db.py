@@ -53,10 +53,33 @@ class DatabaseManager:
     def get_listings(self, db_name, collection_name, query=None, limit=10):
         collection = self.get_collection(db_name, collection_name)
         try:
+            logging.debug(f"Executing query: {query}, limit: {limit}")
             cursor = collection.find(query or {}).limit(limit)
-            return json.loads(dumps(list(cursor)))  # Convert to JSON-serializable format
+            results = list(cursor)
+            logging.debug(f"Found {len(results)} results")
+            return json.loads(dumps(results))  # Convert to JSON-serializable format
         except OperationFailure as e:
             logging.error(f"An error occurred while fetching listings: {e}")
+            raise
+
+    def get_regions(self, db_name, collection_name):
+        collection = self.get_collection(db_name, collection_name)
+        try:
+            regions = collection.distinct("region")
+            logging.debug(f"Found {len(regions)} distinct regions")
+            return regions
+        except OperationFailure as e:
+            logging.error(f"An error occurred while fetching regions: {e}")
+            raise
+
+    def get_countries(self, db_name, collection_name):
+        collection = self.get_collection(db_name, collection_name)
+        try:
+            countries = collection.distinct("country")
+            logging.debug(f"Found {len(countries)} distinct countries")
+            return countries
+        except OperationFailure as e:
+            logging.error(f"An error occurred while fetching countries: {e}")
             raise
 
     def get_listing_by_id(self, db_name, collection_name, listing_id):
@@ -90,7 +113,7 @@ def insert_many_into_collection(places):
     finally:
         db_manager.close_connection()
 
-def get_listings(db_name, collection_name, query=None, limit=10):
+def get_listings(db_name, collection_name, query=None, limit=0):
     try:
         db_manager.connect()
         return db_manager.get_listings(db_name, collection_name, query, limit)
@@ -107,5 +130,25 @@ def get_listing_by_id(db_name, collection_name, listing_id):
     except Exception as e:
         logging.error(f"An error occurred while fetching the listing: {e}")
         return None
+    finally:
+        db_manager.close_connection()
+
+def get_regions(db_name, collection_name):
+    try:
+        db_manager.connect()
+        return db_manager.get_regions(db_name, collection_name)
+    except Exception as e:
+        logging.error(f"An error occurred while fetching regions: {e}")
+        return []
+    finally:
+        db_manager.close_connection()
+
+def get_countries(db_name, collection_name):
+    try:
+        db_manager.connect()
+        return db_manager.get_countries(db_name, collection_name)
+    except Exception as e:
+        logging.error(f"An error occurred while fetching countries: {e}")
+        return []
     finally:
         db_manager.close_connection()
