@@ -200,7 +200,7 @@ def get_city_data():
         place_urls = get_place_urls(browser, city)
         place_details = []
         # Change when done making changes
-        for url in place_urls[:1]: # [:10]:  # Limit to 10 places for demonstration
+        for url in place_urls: # [:10]:  # Limit to 10 places for demonstration
             details = scrape_place_details(browser, url)
             place_details.append(details)
 
