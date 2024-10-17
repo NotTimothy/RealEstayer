@@ -233,7 +233,7 @@ def get_city_data():
         place_urls = get_place_urls(browser, city)
         place_details = []
         # Change when done making changes
-        for url in place_urls: # [:10]:  # Limit to 10 places for demonstration
+        for url in place_urls[:5]: # [:10]:  # Limit to 10 places for demonstration
             details = scrape_place_details(browser, url)
             place_details.append(details)
 
@@ -249,13 +249,13 @@ def get_city_data():
 
 @app.route('/get-listings', methods=['GET'])
 def get_listings():
-    search_term = request.args.get('city', '')
-    limit = int(request.args.get('limit', 10))
+    city = request.args.get('city')
+    limit = int(request.args.get('limit', 0))
 
     query = {}
-    if search_term:
+    if city:
         # Use a case-insensitive regex to match the city name
-        query["location"] = {"$regex": search_term, "$options": "i"}
+        query["location"] = {"$regex": city, "$options": "i"}
 
     try:
         listings = db.get_listings(DB_NAME, COLLECTION_NAME, query, limit)

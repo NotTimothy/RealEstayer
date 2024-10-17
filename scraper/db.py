@@ -183,3 +183,13 @@ def get_countries(db_name, collection_name):
         return []
     finally:
         db_manager.close_connection()
+
+def get_filters(db_name, collection_name, query=None, limit=0):
+    try:
+        db_manager.connect()
+        return db_manager.get_filters(db_name, collection_name, query, limit)
+    except Exception as e:
+        logging.error(f"An error occurred while fetching regions: {e}")
+        return []
+    finally:
+        db_manager.close_connection()
