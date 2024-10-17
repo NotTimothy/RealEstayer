@@ -58,11 +58,11 @@ body
     border-radius: 0 4px 4px 0
 
     &:hover
-      background-color: color.scale($primary-color, $lightness: -10%)
+      background-color: darken($primary-color, 10%)
 
 .listings
   display: grid
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr))
+  grid-template-columns: repeat(3, 1fr)
   gap: 20px
 
 .listing-card
@@ -95,6 +95,28 @@ body
     font-weight: bold
     color: $primary-color
 
+// Pagination styles
+.pagination
+  display: flex
+  justify-content: center
+  margin-top: 30px
+
+  .page-button
+    @include button
+    background-color: $secondary-color
+    color: $white
+    margin: 0 5px
+
+    &:hover
+      background-color: darken($secondary-color, 10%)
+
+    &.active
+      background-color: $primary-color
+
+    &:disabled
+      opacity: 0.5
+      cursor: not-allowed
+
 // Footer styles
 .footer
   background-color: $text-color
@@ -107,9 +129,13 @@ body
     margin: 0
 
 // Responsive styles
+@media (max-width: 1024px)
+  .listings
+    grid-template-columns: repeat(2, 1fr)
+
 @media (max-width: 768px)
   .listings
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr))
+    grid-template-columns: 1fr
 
   .search-bar
     flex-direction: column

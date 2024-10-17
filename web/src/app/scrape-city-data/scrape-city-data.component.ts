@@ -10,7 +10,7 @@ import { ListingService } from '../listings.service';
   selector: 'app-scrape-city-data',
   standalone: true,
   imports: [NgIf, NgFor, FormsModule, HttpClientModule],
-  providers: [ListingService],
+  providers: [ListingService, CityDataService],
   template: `
     <div>
       <h2>Scrape Airbnb Listings</h2>

@@ -7,21 +7,47 @@ import { catchError } from 'rxjs/operators';
   providedIn: 'root'
 })
 export class CityDataService {
-  private apiUrl = 'http://localhost:5000';  // Make sure this matches your Flask server address
+  private apiUrl = 'http://127.0.0.1:5000';  // Make sure this matches your Flask server address
 
   constructor(private http: HttpClient) {}
 
   scrapeCityData(cityName: string): Observable<any> {
-    return this.http.get(`${this.apiUrl}/scrape-city-data?city=${cityName}`)
+    var queryApiHeaders = {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Credentials': 'true',
+      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Methods': 'GET,POST,DELETE',
+    };
+
+    const options = {
+      headers: queryApiHeaders,
+      rejectUnauthorized: false,
+    };
+
+    return this.http.get(`${this.apiUrl}/scrape-city-data?city=${cityName}`, options)
       .pipe(catchError(this.handleError));
   }
 
   getListings(cityName?: string, limit: number = 10): Observable<any> {
+    var queryApiHeaders = {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Credentials': 'true',
+      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Methods': 'GET,POST,DELETE',
+    };
+
+    const options = {
+      headers: queryApiHeaders,
+      rejectUnauthorized: false,
+    };
+
     let url = `${this.apiUrl}/get-listings?limit=${limit}`;
     if (cityName) {
       url += `&city=${cityName}`;
     }
-    return this.http.get(url)
+    return this.http.get(url, options)
       .pipe(catchError(this.handleError));
   }
 

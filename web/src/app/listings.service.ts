@@ -6,30 +6,45 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class ListingService {
-  private apiUrl = 'http://localhost:5000';  // Adjust this URL as needed
+  private apiUrl = 'http://127.0.0.1:5000';  // Adjust this URL as needed
 
   constructor(private http: HttpClient) {}
 
   getListings(searchTerm?: string): Observable<any> {
+    var queryApiHeaders = {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Credentials': 'true',
+      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Methods': 'GET,POST,DELETE',
+    };
+
+    const options = {
+      headers: queryApiHeaders,
+      rejectUnauthorized: false,
+    };
+
     let url = `${this.apiUrl}/get-listings`;
     if (searchTerm) {
       url += `?city=${encodeURIComponent(searchTerm)}`;
     }
-    return this.http.get(url);
-  }
-
-  getFilters(searchTerm: string = '', features: string[] = []): Observable<any> {
-    let params: any = {};
-    if (searchTerm) {
-      params.search = searchTerm;
-    }
-    if (features.length > 0) {
-      params.features = features.join(',');
-    }
-    return this.http.get(`${this.apiUrl}/filters`, { params });
+    return this.http.get(url, options);
   }
 
   scrapeNorthAmerica(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/scrape-north-america`);
+    var queryApiHeaders = {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Credentials': 'true',
+      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Methods': 'GET,POST,DELETE',
+    };
+
+    const options = {
+      headers: queryApiHeaders,
+      rejectUnauthorized: false,
+    };
+
+    return this.http.get(`${this.apiUrl}/scrape-north-america`, options);
   }
 }

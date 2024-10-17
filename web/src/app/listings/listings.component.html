@@ -5,22 +5,10 @@
       <input type="text" [(ngModel)]="searchTerm" placeholder="Search for a place, region, or country..." class="search-input">
       <button (click)="onSearch()" class="search-button">Search</button>
     </div>
-    <div class="features-filter">
-      <h3>Filter by Features:</h3>
-      <div class="feature-buttons">
-        <button
-          *ngFor="let feature of allFeatures"
-          (click)="toggleFeature(feature)"
-          [class.selected]="selectedFeatures.includes(feature)"
-          class="feature-button">
-          {{ feature }}
-        </button>
-      </div>
-    </div>
     <div *ngIf="scrapeMessage" class="scrape-message">{{ scrapeMessage }}</div>
     <div *ngIf="hasSearched">
       <div *ngIf="listings.length > 0; else noResults" class="listings">
-        <div class="listing-card" *ngFor="let listing of listings">
+        <div class="listing-card" *ngFor="let listing of paginatedListings">
           <img [src]="listing.picture_url" alt="Listing image" class="listing-image">
           <div class="listing-details">
             <h2 class="listing-title">{{ listing.title }}</h2>
@@ -38,8 +26,17 @@
         </div>
       </div>
       <ng-template #noResults>
-        <p>No results found for "{{ searchTerm }}". Please try another search or adjust your filters.</p>
+        <p>No results found for "{{ searchTerm }}". Please try another search.</p>
       </ng-template>
+      <div class="pagination" *ngIf="listings.length > 0">
+        <button class="page-button" (click)="prevPage()" [disabled]="currentPage === 1">Previous</button>
+        <button class="page-button" *ngFor="let page of [].constructor(totalPages); let i = index"
+                [class.active]="currentPage === i + 1"
+                (click)="goToPage(i + 1)">
+          {{ i + 1 }}
+        </button>
+        <button class="page-button" (click)="nextPage()" [disabled]="currentPage === totalPages">Next</button>
+      </div>
     </div>
   </div>
 </main>
