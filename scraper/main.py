@@ -174,20 +174,53 @@ def scrape_place_details(browser, url):
     logging.info(f"Scraped details for: {place['title']}")
     return place
 
-def scrape_region(browser, regions, country):
-    all_listings = []
-    for region in regions:
-        logging.info(f"Scraping listings for {region}, {country}")
-        place_urls = get_place_urls(browser, f"{region}, {country}")
-        region_listings = []
-        for url in place_urls[:5]:  # Limit to 5 listings per region for demonstration
-            details = scrape_place_details(browser, url)
-            details['region'] = region
-            details['country'] = country
-            region_listings.append(details)
-        all_listings.extend(region_listings)
-        logging.info(f"Scraped {len(region_listings)} listings for {region}, {country}")
-    return all_listings
+
+def scrape_region(browser, region, country):
+    logging.info(f"Scraping listings for {region}, {country}")
+    place_urls = get_place_urls(browser, f"{region}, {country}")
+    region_listings = []
+    for url in place_urls:
+        details = scrape_place_details(browser, url)
+        details['region'] = region
+        details['country'] = country
+        region_listings.append(details)
+
+    # Write the listings for this region to the database
+    inserted_ids = db.insert_many_into_collection(DB_NAME, COLLECTION_NAME, region_listings)
+    logging.info(f"Inserted {len(inserted_ids)} listings for {region}, {country}")
+
+    return len(inserted_ids)
+
+
+@app.route('/scrape-north-america', methods=['GET'])
+def scrape_north_america():
+    browser = initialize_browser()
+    try:
+        total_listings = 0
+        canada_listings = 0
+        us_listings = 0
+
+        # Scrape Canadian provinces
+        for province in CANADIAN_PROVINCES:
+            canada_listings += scrape_region(browser, province, "Canada")
+            total_listings += canada_listings
+
+        # Scrape US states
+        for state in US_STATES:
+            us_listings += scrape_region(browser, state, "USA")
+            total_listings += us_listings
+
+        return jsonify({
+            "message": "Scraping completed",
+            "total_listings": total_listings,
+            "canada_listings": canada_listings,
+            "us_listings": us_listings,
+        })
+    except Exception as e:
+        logging.error(f"An error occurred while scraping: {e}")
+        return jsonify({"error": "Failed to scrape listings"}), 500
+    finally:
+        browser.quit()
 
 @app.route('/scrape-city-data', methods=['GET'])
 def get_city_data():
@@ -214,43 +247,15 @@ def get_city_data():
     finally:
         browser.quit()
 
-@app.route('/scrape-north-america', methods=['GET'])
-def scrape_north_america():
-    browser = initialize_browser()
-    try:
-        all_listings = []
-
-        # Scrape Canadian provinces
-        canada_listings = scrape_region(browser, CANADIAN_PROVINCES, "Canada")
-        all_listings.extend(canada_listings)
-
-        # Scrape US states
-        us_listings = scrape_region(browser, US_STATES, "USA")
-        all_listings.extend(us_listings)
-
-        inserted_ids = db.insert_many_into_collection(all_listings)
-        return jsonify({
-            "message": "Scraping completed",
-            "total_listings": len(all_listings),
-            "canada_listings": len(canada_listings),
-            "us_listings": len(us_listings),
-            "inserted_ids": inserted_ids
-        })
-    except Exception as e:
-        logging.error(f"An error occurred while scraping: {e}")
-        return jsonify({"error": "Failed to scrape listings"}), 500
-    finally:
-        browser.quit()
-
 @app.route('/get-listings', methods=['GET'])
 def get_listings():
-    city = request.args.get('city')
-    limit = int(request.args.get('limit', 0))
+    search_term = request.args.get('city', '')
+    limit = int(request.args.get('limit', 10))
 
     query = {}
-    if city:
+    if search_term:
         # Use a case-insensitive regex to match the city name
-        query["location"] = {"$regex": city, "$options": "i"}
+        query["location"] = {"$regex": search_term, "$options": "i"}
 
     try:
         listings = db.get_listings(DB_NAME, COLLECTION_NAME, query, limit)
@@ -259,6 +264,24 @@ def get_listings():
         logging.error(f"An error occurred while fetching listings: {e}")
         return jsonify({"error": "Failed to fetch listings"}), 500
 
+@app.route('/filters', methods=['GET'])
+def get_filters():
+    search_term = request.args.get('search', '')
+    features = request.args.get('features', '').split(',') if request.args.get('features') else []
+    limit = int(request.args.get('limit', 10))
+
+    query = {}
+    if search_term:
+        query["location"] = {"$regex": search_term, "$options": "i"}
+    if features:
+        query["features"] = {"$all": features}
+
+    try:
+        filters_result = db.get_filters(DB_NAME, COLLECTION_NAME, query, limit)
+        return jsonify(filters_result)
+    except Exception as e:
+        logging.error(f"An error occurred while fetching filters: {e}")
+        return jsonify({"error": "Failed to fetch filters"}), 500
 
 @app.route('/get-listing/<listing_id>', methods=['GET'])
 def get_listing(listing_id):

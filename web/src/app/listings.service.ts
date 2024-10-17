@@ -18,6 +18,17 @@ export class ListingService {
     return this.http.get(url);
   }
 
+  getFilters(searchTerm: string = '', features: string[] = []): Observable<any> {
+    let params: any = {};
+    if (searchTerm) {
+      params.search = searchTerm;
+    }
+    if (features.length > 0) {
+      params.features = features.join(',');
+    }
+    return this.http.get(`${this.apiUrl}/filters`, { params });
+  }
+
   scrapeNorthAmerica(): Observable<any> {
     return this.http.get(`${this.apiUrl}/scrape-north-america`);
   }

@@ -4,6 +4,7 @@ from bson import ObjectId
 import logging
 import json
 from bson.json_util import dumps
+from sqlalchemy.orm.collections import collection
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -60,6 +61,36 @@ class DatabaseManager:
             return json.loads(dumps(results))  # Convert to JSON-serializable format
         except OperationFailure as e:
             logging.error(f"An error occurred while fetching listings: {e}")
+            raise
+
+    def get_filters(self, db_name, collection_name, query=None, limit=10):
+        collection = self.get_collection(db_name, collection_name)
+        try:
+            logging.debug(f"Executing query: {query}, limit: {limit}")
+
+            # Aggregate to get unique features
+            features_pipeline = [
+                {"$unwind": "$features"},
+                {"$group": {"_id": "$features"}},
+                {"$sort": {"_id": 1}}
+            ]
+            features_cursor = collection.aggregate(features_pipeline)
+            features = [doc["_id"] for doc in features_cursor]
+
+            # Get the listings based on the query
+            cursor = collection.find(query or {}).limit(limit)
+            listings = list(cursor)
+
+            # Prepare the result
+            result = {
+                "features": features,
+                "listings": listings
+            }
+
+            logging.debug(f"Found {len(listings)} listings and {len(features)} unique features")
+            return json.loads(dumps(result))  # Convert to JSON-serializable format
+        except OperationFailure as e:
+            logging.error(f"An error occurred while fetching filters: {e}")
             raise
 
     def get_regions(self, db_name, collection_name):

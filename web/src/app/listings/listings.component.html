@@ -5,6 +5,18 @@
       <input type="text" [(ngModel)]="searchTerm" placeholder="Search for a place, region, or country..." class="search-input">
       <button (click)="onSearch()" class="search-button">Search</button>
     </div>
+    <div class="features-filter">
+      <h3>Filter by Features:</h3>
+      <div class="feature-buttons">
+        <button
+          *ngFor="let feature of allFeatures"
+          (click)="toggleFeature(feature)"
+          [class.selected]="selectedFeatures.includes(feature)"
+          class="feature-button">
+          {{ feature }}
+        </button>
+      </div>
+    </div>
     <div *ngIf="scrapeMessage" class="scrape-message">{{ scrapeMessage }}</div>
     <div *ngIf="hasSearched">
       <div *ngIf="listings.length > 0; else noResults" class="listings">
@@ -26,7 +38,7 @@
         </div>
       </div>
       <ng-template #noResults>
-        <p>No results found for "{{ searchTerm }}". Please try another search.</p>
+        <p>No results found for "{{ searchTerm }}". Please try another search or adjust your filters.</p>
       </ng-template>
     </div>
   </div>

@@ -13,6 +13,8 @@ app/**/*.js.map
 node_modules/
 bower_components/
 
+config.py
+
 # IDEs and editors
 .idea/
 
