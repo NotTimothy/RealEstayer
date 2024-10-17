@@ -7,7 +7,21 @@
     </div>
     <div *ngIf="scrapeMessage" class="scrape-message">{{ scrapeMessage }}</div>
     <div *ngIf="hasSearched">
-      <div *ngIf="listings.length > 0; else noResults" class="listings">
+      <div class="filters-row">
+        <div *ngFor="let filter of filters" class="filter-dropdown">
+          <div class="filter-header" (click)="toggleCollapse(filter)">
+            <h3>{{ filter.name }}</h3>
+            <span class="toggle-icon">{{ filter.isCollapsed ? '▼' : '▲' }}</span>
+          </div>
+          <div class="filter-options" [class.collapsed]="filter.isCollapsed">
+            <div *ngFor="let option of filter.options" class="filter-option">
+              <input type="checkbox" [id]="option" [checked]="isFilterSelected(filter.name, option)" (change)="toggleFilter(filter.name, option)">
+              <label [for]="option">{{ option }}</label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div *ngIf="filteredListings.length > 0; else noResults" class="listings">
         <div class="listing-card" *ngFor="let listing of paginatedListings">
           <img [src]="listing.picture_url" alt="Listing image" class="listing-image">
           <div class="listing-details">
@@ -18,24 +32,25 @@
             <div class="listing-features" *ngIf="listing.features && listing.features.length > 0">
               <h3>Amenities:</h3>
               <ul>
-                <li *ngFor="let feature of listing.features">{{ feature }}</li>
+                <li *ngFor="let feature of listing.features.slice(0, 5)">{{ feature }}</li>
               </ul>
+              <p *ngIf="listing.features.length > 5">+{{ listing.features.length - 5 }} more</p>
             </div>
             <a [href]="listing.url" target="_blank">View on Airbnb</a>
           </div>
         </div>
       </div>
       <ng-template #noResults>
-        <p>No results found for "{{ searchTerm }}". Please try another search.</p>
+        <p class="no-results">No results found for "{{ searchTerm }}" with the selected filters. Please try another search or adjust your filters.</p>
       </ng-template>
-      <div class="pagination" *ngIf="listings.length > 0">
-        <button class="page-button" (click)="prevPage()" [disabled]="currentPage === 1">Previous</button>
+      <div class="pagination" *ngIf="filteredListings.length > 0">
+        <button class="page-button" (click)="prevPage()" [disabled]="!hasPreviousPage()">Previous</button>
         <button class="page-button" *ngFor="let page of [].constructor(totalPages); let i = index"
                 [class.active]="currentPage === i + 1"
                 (click)="goToPage(i + 1)">
           {{ i + 1 }}
         </button>
-        <button class="page-button" (click)="nextPage()" [disabled]="currentPage === totalPages">Next</button>
+        <button class="page-button" (click)="nextPage()" [disabled]="!hasNextPage()">Next</button>
       </div>
     </div>
   </div>

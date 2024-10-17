@@ -1,1 +1,16 @@
-<p>city-data works!</p>
+<div>
+  <h2>Scrape Airbnb Listings</h2>
+  <input [(ngModel)]="cityName" placeholder="Enter city name">
+  <button (click)="scrapeCityData()">Scrape Data</button>
+  <button (click)="scrapeNorthAmerica()" class="scrape-button">Scrape North America</button>
+  <div *ngIf="scrapeMessage" class="scrape-message">{{ scrapeMessage }}</div>
+  <div *ngIf="cityData">
+    <h3>Scraped Listings in {{ cityData.city }}</h3>
+    <div *ngFor="let place of cityData.places">
+      <h4>{{ place.title }}</h4>
+      <p>Price: {{ place.price }}</p>
+      <p>Rating: {{ place.rating }}</p>
+      <a [href]="place.url" target="_blank">View on Airbnb</a>
+    </div>
+  </div>
+</div>

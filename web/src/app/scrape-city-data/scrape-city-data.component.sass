@@ -1,0 +1,159 @@
+// Variables
+$primary-color: #FF5A5F
+$secondary-color: #00A699
+$background-color: #F7F7F7
+$text-color: #484848
+$white: #FFFFFF
+$gray: #767676
+$light-gray: #E4E4E4
+
+// Mixins
+@mixin button
+  padding: 10px 20px
+  border: none
+  border-radius: 4px
+  font-weight: bold
+  cursor: pointer
+  transition: all 0.3s ease
+
+@mixin card-shadow
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1)
+  transition: box-shadow 0.3s ease, transform 0.3s ease
+
+.scrape-container
+  max-width: 1200px
+  margin: 0 auto
+  padding: 40px 20px
+
+.scrape-title
+  font-size: 2.5rem
+  color: $primary-color
+  text-align: center
+  margin-bottom: 30px
+
+.scrape-controls
+  display: flex
+  flex-direction: column
+  align-items: center
+  margin-bottom: 30px
+
+  .input-group
+    display: flex
+    width: 100%
+    max-width: 500px
+    margin-bottom: 15px
+
+  .scrape-input
+    flex-grow: 1
+    padding: 12px
+    font-size: 1rem
+    border: 2px solid $light-gray
+    border-radius: 4px 0 0 4px
+    transition: border-color 0.3s ease
+
+    &:focus
+      outline: none
+      border-color: $primary-color
+
+  .scrape-button
+    @include button
+    background-color: $primary-color
+    color: $white
+
+    &:hover
+      background-color: darken($primary-color, 10%)
+
+  .scrape-button-large
+    width: 100%
+    max-width: 500px
+    padding: 15px
+    font-size: 1.1rem
+    background-color: $secondary-color
+
+    &:hover
+      background-color: darken($secondary-color, 10%)
+
+.scrape-message
+  text-align: center
+  padding: 15px
+  border-radius: 4px
+  margin-bottom: 30px
+
+  &.success
+    background-color: lighten($secondary-color, 40%)
+    color: darken($secondary-color, 20%)
+
+  &.error
+    background-color: lighten($primary-color, 30%)
+    color: darken($primary-color, 20%)
+
+.scrape-results
+  .results-title
+    font-size: 2rem
+    color: $text-color
+    text-align: center
+    margin-bottom: 20px
+
+.listings-grid
+  display: grid
+  grid-template-columns: repeat(3, 1fr)
+  gap: 30px
+
+.listing-card
+  background-color: $white
+  border-radius: 8px
+  overflow: hidden
+  @include card-shadow
+
+  &:hover
+    transform: translateY(-5px)
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15)
+
+  .listing-image
+    width: 100%
+    height: 200px
+    object-fit: cover
+
+  .listing-details
+    padding: 20px
+
+  .listing-title
+    font-size: 1.2rem
+    margin: 0 0 10px
+    color: $primary-color
+
+  .listing-price, .listing-rating
+    color: $gray
+    margin-bottom: 5px
+
+  .listing-link
+    display: inline-block
+    margin-top: 10px
+    color: $secondary-color
+    text-decoration: none
+    font-weight: bold
+    transition: color 0.3s ease
+
+    &:hover
+      color: darken($secondary-color, 15%)
+
+// Responsive styles
+@media (max-width: 1024px)
+  .listings-grid
+    grid-template-columns: repeat(2, 1fr)
+
+@media (max-width: 768px)
+  .listings-grid
+    grid-template-columns: 1fr
+
+  .scrape-controls
+    .input-group
+      flex-direction: column
+
+    .scrape-input
+      border-radius: 4px
+      margin-bottom: 10px
+
+    .scrape-button
+      border-radius: 4px
+      width: 100%
