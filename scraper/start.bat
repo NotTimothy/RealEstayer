@@ -1,4 +1,9 @@
+REM start-dev.bat
 @echo off
-REM run-server.bat
-set PYTHONPATH=%PYTHONPATH%;%~dp0
+set FLASK_ENV=development
+python app.py
+
+REM start-prod.bat
+@echo off
+set FLASK_ENV=production
 python app.py
