@@ -2,11 +2,17 @@
   "name": "realestayer",
   "version": "0.0.0",
   "scripts": {
-    "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build",
-    "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "ng build --aot --optimization --progress --configuration=production",
+    "build-img": "ng build --output-path=./dist/out --aot --build-optimizer --common-chunk --vendor-chunk --optimization --progress --configuration=production",
+    "start-remote": "ng serve --host 192.168.1.71 --port 6969",
+    "start-local": "ng serve --port 6969",
+    "build-image": "docker build -t high-seas-frontend .",
+    "remove-image": "docker rmi high-seas-frontend",
+    "run-container": "docker run --name high-seas-frontend -d -p 8080:80 high-seas-frontend",
+    "remove-container": "docker rm -f high-seas-frontend",
+    "containerize": "npm run build-image && npm run run-container",
+    "recontainerize": "npm run remove-container && npm run build-image && npm run run-container"
   },
   "private": true,
   "dependencies": {

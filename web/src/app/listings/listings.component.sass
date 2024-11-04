@@ -75,7 +75,7 @@ body
     &:hover
       background-color: darken($primary-color, 10%)
 
-// Updated styles for collapsible filters
+// Filter styles
 .filters-row
   display: flex
   justify-content: space-between
@@ -135,9 +135,10 @@ body
     color: $text-color
     cursor: pointer
 
+// Listing card styles
 .listings
   display: grid
-  grid-template-columns: repeat(3, 1fr)
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr))
   gap: 30px
 
 .listing-card
@@ -202,17 +203,49 @@ body
     &:hover
       color: darken($primary-color, 15%)
 
-// Pagination styles
+// Updated pagination styles
 .pagination
   display: flex
   justify-content: center
+  align-items: center
   margin-top: 40px
+  gap: 8px
+  flex-wrap: wrap
 
   .page-button
     @include button
-    background-color: $secondary-color
-    color: $white
-    margin: 0 5px
+    background-color: $white
+    color: $primary-color
+    border: 1px solid $primary-color
+    min-width: 40px
+    height: 40px
+    padding: 0 12px
+    display: flex
+    align-items: center
+    justify-content: center
+    font-size: 0.9rem
 
-    &:hover
-      background-color: darken($secondary-color, 10%)
+    &:hover:not([disabled])
+      background-color: $primary-color
+      color: $white
+
+    &.active
+      background-color: $primary-color
+      color: $white
+      font-weight: bold
+
+    &[disabled]
+      opacity: 0.5
+      cursor: not-allowed
+      background-color: $light-gray
+      border-color: $gray
+      color: $gray
+
+  .page-ellipsis
+    color: $gray
+    padding: 0 8px
+    user-select: none
+    display: flex
+    align-items: center
+    justify-content: center
+    height: 40px

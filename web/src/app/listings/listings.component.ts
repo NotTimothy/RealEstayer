@@ -10,6 +10,8 @@ interface Listing {
   picture_url: string
   location: string
   region: string
+  state: string  // Added state field
+  province: string  // Added province field
   country: string
   price: string
   features: string[]
@@ -72,11 +74,8 @@ export class ListingsComponent implements OnInit {
   }
 
   onSearch() {
-    if (this.searchTerm.trim() !== '') {
-      this.getListings()
-    } else {
-      console.log('Please enter a place, region, or country to search')
-    }
+    // Always fetch listings, regardless of whether searchTerm is empty
+    this.getListings()
   }
 
   updateFilterOptions() {
@@ -89,6 +88,18 @@ export class ListingsComponent implements OnInit {
 
   filterListings() {
     this.filteredListings = this.allListings.filter(listing => {
+      // If searchTerm is not empty, filter by it
+      if (this.searchTerm.trim() !== '') {
+        const searchLower = this.searchTerm.toLowerCase()
+        if (!listing.location.toLowerCase().includes(searchLower) &&
+          !listing.region.toLowerCase().includes(searchLower) &&
+          !listing.country.toLowerCase().includes(searchLower) &&
+          !listing.state.toLowerCase().includes(searchLower) &&
+          !listing.province.toLowerCase().includes(searchLower)) {
+          return false
+        }
+      }
+
       return this.filters.every(filter => {
         if (filter.selected.length === 0) return true
 
@@ -167,5 +178,32 @@ export class ListingsComponent implements OnInit {
 
   hasPreviousPage(): boolean {
     return this.currentPage > 1
+  }
+
+  getVisiblePages(): number[] {
+    const delta = 2;
+    const range: number[] = [];
+    const rangeWithDots: number[] = [];
+
+    let left = this.currentPage - delta;
+    let right = this.currentPage + delta + 1;
+
+    // Handle edge cases
+    if (left < 1) {
+      left = 1;
+      right = Math.min(5, this.totalPages);
+    }
+
+    if (right > this.totalPages) {
+      right = this.totalPages;
+      left = Math.max(1, this.totalPages - 4);
+    }
+
+    // Generate the range
+    for (let i = left; i < right; i++) {
+      range.push(i);
+    }
+
+    return range;
   }
 }
