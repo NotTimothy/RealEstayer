@@ -84,7 +84,7 @@ def get_attribute_or_empty(browser, by, value, attribute):
 
 def get_place_urls(browser, location):
     urls = set()
-    base_url = f'https://www.airbnb.com/s/{location}/homes?tab_id=home_tab&refinement_paths%5B%5D=%2Fhomes&flexible_trip_lengths%5B%5D=one_week&monthly_start_date=2024-11-01&monthly_length=3&monthly_end_date=2025-02-01&price_filter_input_type=0&channel=EXPLORE&date_picker_type=flexible_dates&source=structured_search_input_header&search_type=autocomplete_click&query={location}'
+    base_url = f'https://www.airbnb.com/s/{location}/homes?tab_id=home_tab&refinement_paths%5B%5D=%2Fhomes&flexible_trip_lengths%5B%5D=one_week&monthly_start_date=2024-12-01&monthly_length=12&monthly_end_date=2026-12-01&price_filter_input_type=0&channel=EXPLORE&date_picker_type=flexible_dates&source=structured_search_input_header&search_type=autocomplete_click&query={location}'
     browser.get(base_url)
 
     while True:
