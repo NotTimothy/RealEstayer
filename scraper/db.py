@@ -134,13 +134,14 @@ COLLECTION_NAME = "listings"
 
 db_manager = DatabaseManager(CONNECTION_STRING)
 
-def insert_many_into_collection(places):
+def insert_many_into_collection(db_name, collection_name, places):
     try:
         db_manager.connect()
-        inserted_ids = db_manager.insert_many(DB_NAME, COLLECTION_NAME, places)
+        inserted_ids = db_manager.insert_many(db_name, collection_name, places)
         return inserted_ids
     except Exception as e:
         logging.error(f"An error occurred: {e}")
+        return []
     finally:
         db_manager.close_connection()
 

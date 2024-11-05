@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { CityDataService } from "../city-data.service";
 import { FormsModule } from "@angular/forms";
-import { NgIf, NgFor } from "@angular/common";
+import {NgIf, NgFor, KeyValuePipe, TitleCasePipe, NgClass} from "@angular/common";
 import { HttpClientModule } from '@angular/common/http';
 import { ListingService } from '../listings.service';
 
@@ -9,26 +9,41 @@ import { ListingService } from '../listings.service';
 @Component({
   selector: 'app-scrape-city-data',
   standalone: true,
-  imports: [NgIf, NgFor, FormsModule, HttpClientModule],
+  imports: [NgIf, NgFor, KeyValuePipe, TitleCasePipe, FormsModule, HttpClientModule, NgClass],
   providers: [ListingService, CityDataService],
   template: `
-    <div>
-      <h2>Scrape Airbnb Listings</h2>
-      <input [(ngModel)]="cityName" placeholder="Enter city name">
-      <button (click)="scrapeCityData()">Scrape Data</button>
-      <button (click)="scrapeNorthAmerica()" class="scrape-button">Scrape North America</button>
-      <div *ngIf="scrapeMessage" class="scrape-message">{{ scrapeMessage }}</div>
-      <div *ngIf="cityData">
-        <h3>Scraped Listings in {{ cityData.city }}</h3>
-        <div *ngFor="let place of cityData.places">
-          <h4>{{ place.title }}</h4>
-          <p>Price: {{ place.price }}</p>
-          <p>Rating: {{ place.rating }}</p>
-          <a [href]="place.url" target="_blank">View on Airbnb</a>
+    <div class="scrape-container">
+      <h2 class="scrape-title">Scrape Airbnb Listings</h2>
+
+      <div class="scrape-controls">
+        <div class="input-group">
+          <input [(ngModel)]="cityName" placeholder="Enter city name" class="scrape-input">
+          <button (click)="scrapeCityData()" class="scrape-button">Scrape City</button>
+        </div>
+        <button (click)="scrapeNorthAmerica()" class="scrape-button scrape-button-large">Scrape North America</button>
+      </div>
+
+      <div *ngIf="scrapeMessage" class="scrape-message" [ngClass]="{'success': !scrapeMessage, 'error': scrapeMessage}">
+        {{ scrapeMessage }}
+      </div>
+
+      <div *ngIf="cityData" class="scrape-results">
+        <h3 class="results-title">Scraped Listings in {{ cityData.city }}</h3>
+        <div class="listings-grid">
+          <div *ngFor="let place of cityData.places" class="listing-card">
+            <img [src]="place.picture_url" alt="{{ place.title }}" class="listing-image">
+            <div class="listing-details">
+              <h4 class="listing-title">{{ place.title }}</h4>
+              <p class="listing-price">Price: {{ place.price }}</p>
+              <p class="listing-rating">Rating: {{ place.rating }}</p>
+              <a [href]="place.url" target="_blank" class="listing-link">View on Airbnb</a>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  `
+  `,
+  styleUrls: ['scrape-city-data.component.sass'],
 })
 export class ScrapeCityDataComponent {
   cityName: string = '';
