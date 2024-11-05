@@ -39,12 +39,12 @@
           <div class="listing-details">
             <h2 class="listing-title">{{ listing.title }}</h2>
             <p class="listing-location">{{ listing.location }}</p>
-            <p class="listing-region">
-              {{ listing.region }}
-              <ng-container *ngIf="listing.state">{{ listing.state }}</ng-container>
-              <ng-container *ngIf="listing.province">{{ listing.province }}</ng-container>
-              , {{ listing.country }}
-            </p>
+<!--            <p class="listing-region">-->
+<!--              {{ listing.region }}-->
+<!--              <ng-container *ngIf="listing.state">{{ listing.state }}</ng-container>-->
+<!--              <ng-container *ngIf="listing.province">{{ listing.province }}</ng-container>-->
+<!--              , {{ listing.country }}-->
+<!--            </p>-->
             <p class="listing-price">{{ listing.price }} total</p>
             <div class="listing-features" *ngIf="listing.features?.length">
               <h3>Amenities:</h3>
