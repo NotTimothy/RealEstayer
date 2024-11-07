@@ -173,6 +173,10 @@ def scrape_features(browser):
         # If unsuccessful, try to scrape features from the main page
         return [feature.text for feature in browser.find_elements(By.XPATH, "//div[contains(@class, 'amenities')]//div[contains(@class, 'title')]")]
 
+def scrape_house_details(browser):
+    logging.info(f"Scraped the details about the AirBnB.")
+    return [details.text for details in browser.find_elements(By.CLASS_NAME, "l7n4lsf")]
+
 def scrape_place_details(browser, url):
     browser.get(url)
     time.sleep(5)  # Wait for page to load
@@ -182,7 +186,9 @@ def scrape_place_details(browser, url):
              "description": get_text_or_empty(browser, By.CLASS_NAME, "l1h825yc"),
              "price": get_price(browser, By.CLASS_NAME, "_j1kt73"),
              "rating": get_text_or_empty(browser, By.CLASS_NAME, "r1dxllyb"),
-             "location": get_text_or_empty(browser, By.CLASS_NAME, "_152qbzi"), "features": scrape_features(browser)}
+             "location": get_text_or_empty(browser, By.CLASS_NAME, "_152qbzi"),
+             "features": scrape_features(browser),
+             "house_details": scrape_house_details(browser)}
 
     # Scrape the features
 
