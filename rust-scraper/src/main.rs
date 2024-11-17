@@ -78,7 +78,7 @@ async fn main() {
 
         .layer(cors);
 
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:8782")
+    let listener = tokio::net::TcpListener::bind("localhost:8782")
         .await
         .expect("Failed to start server.");
     tracing::debug!("listening on {}", listener.local_addr().unwrap());
