@@ -14,6 +14,9 @@ use std::time::Duration;
 use thirtyfour::{ChromiumLikeCapabilities, DesiredCapabilities, WebDriver};
 use anyhow::Result;
 
+// Base URL constant
+const BASE_URL: &str = "https://www.airbnb.com";
+
 // List of Canadian provinces and territories
 const CANADIAN_PROVINCES: [&str; 13] = [
     "Alberta", "British Columbia", "Manitoba", "New Brunswick", "Newfoundland and Labrador",
@@ -31,10 +34,19 @@ const US_STATES: [&str; 50] = [
     "Utah", "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"
 ];
 
+// Helper function to construct full URL
+fn construct_url(path: &str) -> String {
+    if path.starts_with("http") {
+        path.to_string()
+    } else {
+        format!("{}{}", BASE_URL, path.trim_start_matches('/'))
+    }
+}
+
 // Helper function to start ChromeDriver
 async fn ensure_chromedriver_running() -> Result<()> {
     // Try to connect to existing ChromeDriver
-    if reqwest::get("http://localhost:9515/status").is_ok() {
+    if reqwest::get("http://localhost:9515/status").await.is_ok() {
         return Ok(());
     }
 
@@ -49,7 +61,7 @@ async fn ensure_chromedriver_running() -> Result<()> {
 
     // Wait for ChromeDriver to start
     for _ in 0..10 {
-        if reqwest::get("http://localhost:9515/status").is_ok() {
+        if reqwest::get("http://localhost:9515/status").await.is_ok() {
             return Ok(());
         }
         sleep(Duration::from_secs(1)).await;
@@ -58,7 +70,7 @@ async fn ensure_chromedriver_running() -> Result<()> {
     Err(anyhow::anyhow!("ChromeDriver failed to start"))
 }
 
-// Helper function to create WebDriver with proper configuration
+/// Helper function to create WebDriver with proper configuration
 async fn create_webdriver() -> Result<WebDriver> {
     ensure_chromedriver_running().await?;
 
@@ -76,7 +88,11 @@ async fn create_webdriver() -> Result<WebDriver> {
     // Create WebDriver with retry logic
     for attempt in 1..=3 {
         match WebDriver::new("http://localhost:9515", caps.clone()).await {
-            Ok(driver) => return Ok(driver),
+            Ok(driver) => {
+                // Navigate to base URL first
+                driver.get(BASE_URL).await?;
+                return Ok(driver);
+            }
             Err(e) if attempt < 3 => {
                 log::warn!("WebDriver creation attempt {} failed: {}", attempt, e);
                 sleep(Duration::from_secs(2)).await;
@@ -159,9 +175,10 @@ pub async fn scrape_city_data(
         let mut place_details = Vec::new();
 
         for url in urls {
-            match scrape_place_details(&driver, &url).await {
+            let full_url = construct_url(&url);
+            match scrape_place_details(&driver, &full_url).await {
                 Ok(details) => place_details.push(details),
-                Err(e) => log::error!("Error scraping {}: {}", url, e),
+                Err(e) => log::error!("Error scraping {}: {}", full_url, e),
             }
         }
 
