@@ -1,5 +1,12 @@
-use log::{info, trace, warn};
+mod models;
+mod database;
+mod routes;
+mod scraping;
+
+
+use log::{error, info, trace, warn};
 use tracing_appender::rolling::{RollingFileAppender, Rotation};
+use tracing_subscriber::{fmt::{self, format::FmtSpan}, prelude::*, filter::LevelFilter, EnvFilter};
 use std::net::SocketAddr;
 use axum_server::tls_rustls::RustlsConfig;
 use std::sync::Arc;
@@ -9,29 +16,12 @@ use axum::{
 };
 use tower_http::cors::{Any, CorsLayer};
 
-// List of Canadian provinces and territories
-const CANADIAN_PROVINCES: [&str; 13] = [
-    "Alberta", "British Columbia", "Manitoba", "New Brunswick", "Newfoundland and Labrador",
-    "Northwest Territories", "Nova Scotia", "Nunavut", "Ontario", "Prince Edward Island",
-    "Quebec", "Saskatchewan", "Yukon"
-];
-
-// List of US states
-const US_STATES: [&str; 50] = [
-    "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "Florida",
-    "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine",
-    "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska",
-    "Nevada", "New Hampshire", "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio",
-    "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas",
-    "Utah", "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"
-];
-
 pub fn setup_logging() {
     // Create file appender
     let file_appender = RollingFileAppender::new(
         Rotation::DAILY,
         "logs",
-        "dota-trends.log",
+        "realestayer-scraper.log",
     );
 
     // Create an EnvFilter that enables everything
@@ -63,6 +53,49 @@ pub fn setup_logging() {
 }
 
 #[tokio::main]
-fn main() {
+async fn main() {
+    // Initialize logging first
+    setup_logging();
 
+    // Start your application...
+    tracing::info!("Starting application...");
+
+    let cors = CorsLayer::new()
+        .allow_origin(Any)
+        .allow_methods(Any)
+        .allow_headers(Any);
+
+    let app = Router::new()
+        .route("/scrape-north-america", get(routes::scrape_north_america))
+        .route("/scrape-city-data", get(routes::scrape_city_data))
+        .route("/get-listings", get(routes::get_listings))
+        .route("/filters", get(routes::filters))
+        .route("/get-listings/{city}/{limit}", get(routes::get_listings))
+        .route("/get-listings/{city}", get(routes::get_listings_without_limit))
+        .route("/get-listing/{listing_id}", get(routes::get_listing))
+        .route("/info", get(routes::info))
+        .route("/health", get(routes::health))
+
+        .layer(cors);
+
+    let listener = tokio::net::TcpListener::bind("localhost:8782")
+        .await
+        .expect("Failed to start server.");
+    tracing::debug!("listening on {}", listener.local_addr().unwrap());
+    axum::serve(listener, app).await.unwrap();
+    
+    // Configure the domain and certificate
+    // let config = RustlsConfig::from_pem_file(
+    //     "./fullchain.pem", // /usr/local/bin
+    //     "./privkey.pem", // /usr/local/bin
+    // )
+    //     .await
+    //     .expect("Failed to load certificate and private key");
+
+    // Run the server
+    // let addr = SocketAddr::from(([0, 0, 0, 0], 8782));
+    // axum_server::bind_rustls(addr, config)
+    //     .serve(app.into_make_service())
+    //     .await
+    //     .expect("Failed to start server");
 }
