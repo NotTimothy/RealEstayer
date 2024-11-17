@@ -13,9 +13,10 @@ use tokio::time::sleep;
 use std::time::Duration;
 use thirtyfour::{ChromiumLikeCapabilities, DesiredCapabilities, WebDriver};
 use anyhow::Result;
+use log::info;
 
 // Base URL constant
-const BASE_URL: &str = "https://www.airbnb.com";
+const BASE_URL: &str = "https://www.airbnb.com/";
 
 // List of Canadian provinces and territories
 const CANADIAN_PROVINCES: [&str; 13] = [
@@ -39,6 +40,7 @@ fn construct_url(path: &str) -> String {
     if path.starts_with("http") {
         path.to_string()
     } else {
+        info!("{}{}", BASE_URL, path);
         format!("{}{}", BASE_URL, path.trim_start_matches('/'))
     }
 }

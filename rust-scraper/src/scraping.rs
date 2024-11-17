@@ -9,19 +9,29 @@ use std::sync::Arc;
 use futures::TryFutureExt;
 use crate::models::Listing;
 const MAX_CONCURRENT_SCRAPES: usize = 5;
+const BASE_URL: &str = "https://www.airbnb.com/";
+
+// Helper function to construct full URLs
+fn construct_full_url(path: &str) -> String {
+    if path.starts_with("http") {
+        path.to_string()
+    } else {
+        format!("{}{}", BASE_URL, path)//.trim_start_matches('/'))
+    }
+}
 
 pub async fn get_place_urls(driver: &WebDriver, location: &str) -> Result<Vec<String>> {
     let encoded_location = urlencoding::encode(location);
-    let base_url = format!(
-        "https://www.airbnb.com/s/{}/homes?tab_id=home_tab&refinement_paths%5B%5D=%2Fhomes&\
+    let search_url = format!(
+        "{}/s/{}/homes?tab_id=home_tab&refinement_paths%5B%5D=%2Fhomes&\
          flexible_trip_lengths%5B%5D=one_week&monthly_start_date=2024-12-01&monthly_length=12&\
          monthly_end_date=2026-12-01&price_filter_input_type=0&channel=EXPLORE&\
          date_picker_type=flexible_dates&source=structured_search_input_header&adults=3&\
          search_type=autocomplete_click&query={}",
-        encoded_location, encoded_location
+        BASE_URL, encoded_location, encoded_location
     );
 
-    driver.goto(&base_url).await?;
+    driver.goto(&search_url).await?;
     let mut urls = HashSet::new();
     let semaphore = Arc::new(Semaphore::new(MAX_CONCURRENT_SCRAPES));
 
@@ -33,8 +43,11 @@ pub async fn get_place_urls(driver: &WebDriver, location: &str) -> Result<Vec<St
             let permit = semaphore.clone().acquire_owned();
             async move {
                 let _permit = permit.await?;
-                let href = place.attr("href").await?;
-                Ok::<Option<String>, anyhow::Error>(href)
+                if let Ok(Some(href)) = place.attr("href").await {
+                    Ok::<Option<String>, anyhow::Error>(Some(construct_full_url(&href)))
+                } else {
+                    Ok::<Option<String>, anyhow::Error>(None)
+                }
             }
         }).collect();
 
@@ -65,6 +78,7 @@ pub async fn get_place_urls(driver: &WebDriver, location: &str) -> Result<Vec<St
     Ok(urls.into_iter().collect())
 }
 
+// Rest of the helper functions remain unchanged
 async fn close_modal(driver: &WebDriver) -> Result<()> {
     if let Ok(close_button) = driver.find(By::XPath("//button[@aria-label='Close']")).await {
         if close_button.is_clickable().await? {
@@ -192,12 +206,14 @@ async fn get_price(driver: &WebDriver, by: By) -> Result<String> {
 }
 
 pub async fn scrape_place_details(driver: &WebDriver, url: &str) -> Result<Listing> {
-    driver.goto(url).await?;
+    // Ensure we have a full URL before navigating
+    let full_url = construct_full_url(url);
+    driver.goto(&full_url).await?;
     sleep(Duration::from_secs(5)).await;
 
     let listing = Listing {
         id: None,
-        url: url.to_string(),
+        url: full_url,  // Store the full URL in the listing
         title: get_text_or_empty(driver, By::Tag("h1")).await?,
         picture_url: get_attribute_or_empty(driver, By::ClassName("itu7ddv"), "src").await?,
         description: get_text_or_empty(driver, By::ClassName("l1h825yc")).await?,
