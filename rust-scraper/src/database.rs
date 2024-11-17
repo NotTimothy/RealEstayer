@@ -14,7 +14,7 @@ use tokio::sync::OnceCell;
 static DB: OnceCell<Database> = OnceCell::const_new();
 
 pub async fn get_collection() -> Collection<Listing> {
-    let client_options = ClientOptions::parse("mongodb://localhost:27017").await.unwrap();
+    let client_options = ClientOptions::parse("mongodb://192.168.1.71:27017/?retryWrites=true&loadBalanced=false&serverSelectionTimeoutMS=5000&connectTimeoutMS=10000").await.unwrap();
     let client = Client::with_options(client_options).unwrap();
     client.database("airbnb").collection("listings")
 }
