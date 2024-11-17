@@ -46,7 +46,7 @@ fn construct_url(path: &str) -> String {
 // Helper function to start ChromeDriver
 async fn ensure_chromedriver_running() -> Result<()> {
     // Try to connect to existing ChromeDriver
-    if reqwest::get("http://localhost:9515/status").await.is_ok() {
+    if reqwest::get("http://localhost:9515/status").is_ok() {
         return Ok(());
     }
 
@@ -61,7 +61,7 @@ async fn ensure_chromedriver_running() -> Result<()> {
 
     // Wait for ChromeDriver to start
     for _ in 0..10 {
-        if reqwest::get("http://localhost:9515/status").await.is_ok() {
+        if reqwest::get("http://localhost:9515/status").is_ok() {
             return Ok(());
         }
         sleep(Duration::from_secs(1)).await;
