@@ -5,7 +5,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "ng build --aot --optimization --progress --configuration=production",
     "build-img": "ng build --output-path=./dist/out --aot --build-optimizer --common-chunk --vendor-chunk --optimization --progress --configuration=production",
-    "start-remote": "ng serve --host 192.168.1.78 --port 6969",
+    "start-remote": "ng serve --host 192.168.1.90 --port 6969",
     "start-local": "ng serve --port 6969",
     "build-image": "docker build -t high-seas-frontend .",
     "remove-image": "docker rmi high-seas-frontend",
