@@ -33,9 +33,10 @@ logger = logging.getLogger(__name__)
 
 # List of Canadian provinces and territories
 CANADIAN_PROVINCES = [
-    "Alberta", "British Columbia", "Manitoba", "New Brunswick", "Newfoundland and Labrador",
-    "Northwest Territories", "Nova Scotia", "Nunavut", "Ontario", "Prince Edward Island",
-    "Quebec", "Saskatchewan", "Yukon"
+    # "Alberta", "British Columbia", "Manitoba", "New Brunswick", "Newfoundland and Labrador",
+    # "Northwest Territories", "Nova Scotia", "Nunavut", "Ontario", "Prince Edward Island",
+    # "Quebec", "Saskatchewan",
+    "Yukon"
 ]
 
 # List of US states
