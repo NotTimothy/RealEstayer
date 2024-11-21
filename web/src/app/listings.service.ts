@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class ListingService {
-  private apiUrl = 'http://localhost:8782';  // Adjust this URL as needed
+  private apiUrl = 'http://localhost:5000';  // Adjust this URL as needed
 
   constructor(private http: HttpClient) {}
 
