@@ -38,6 +38,8 @@ pub async fn get_place_urls(driver: &WebDriver, location: &str) -> Result<Vec<St
     loop {
         sleep(Duration::from_secs(8)).await;
 
+        sleep(Duration::from_millis(fastrand::u64(1000..3000))).await;
+
         let places = driver.find_all(By::ClassName("atm_7l_1j28jx2")).await?;
         let mut tasks: FuturesUnordered<_> = places.into_iter().map(|place| {
             let permit = semaphore.clone().acquire_owned();
