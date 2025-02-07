@@ -47,21 +47,21 @@ fn construct_url(path: &str) -> String {
 
 // Helper function to start ChromeDriver
 async fn ensure_chromedriver_running() -> Result<()> {
-    // Try to connect to existing ChromeDriver
     if reqwest::get("http://localhost:9515/status").is_ok() {
         return Ok(());
     }
 
-    // Start ChromeDriver
     #[cfg(target_os = "windows")]
-    let chromedriver_cmd = "chromedriver.exe";
+    let chromedriver_cmd = "./chromedriver.exe";
+
+    #[cfg(not(target_os = "windows"))]
+    let chromedriver_cmd = "./chromedriver";
 
     Command::new(chromedriver_cmd)
         .arg("--port=9515")
         .spawn()
         .map_err(|e| anyhow::anyhow!("Failed to start ChromeDriver: {}", e))?;
 
-    // Wait for ChromeDriver to start
     for _ in 0..10 {
         if reqwest::get("http://localhost:9515/status").is_ok() {
             return Ok(());
@@ -78,20 +78,15 @@ async fn create_webdriver() -> Result<WebDriver> {
 
     let mut caps = DesiredCapabilities::chrome();
 
-    // Add Chrome options for better reliability
     caps.add_arg("--no-sandbox")?;
     caps.add_arg("--disable-dev-shm-usage")?;
     caps.add_arg("--disable-gpu")?;
     caps.add_arg("--window-size=1920,1080")?;
+    caps.set_binary("./chrome.app/Contents/MacOS/Google Chrome for Testing")?;
 
-    // Optional: run headless
-    // caps.add_chrome_arg("--headless")?;
-
-    // Create WebDriver with retry logic
     for attempt in 1..=3 {
         match WebDriver::new("http://localhost:9515", caps.clone()).await {
             Ok(driver) => {
-                // Navigate to base URL first
                 driver.get(BASE_URL).await?;
                 return Ok(driver);
             }
@@ -230,6 +225,24 @@ pub async fn get_listings_without_limit(
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
             format!("Failed to get listings: {}", e),
+        )
+            .into_response(),
+    }
+}
+
+pub async fn get_all_listings() -> impl IntoResponse {
+    let result = async {
+        let query = doc! {}; // Empty query to get all documents
+        let listings = database::get_listings_by_query(query, 0).await?; // 0 limit means no limit
+        Ok::<_, anyhow::Error>(Json(listings))
+    }
+        .await;
+
+    match result {
+        Ok(response) => response.into_response(),
+        Err(e) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Failed to get listings: {}", e)
         )
             .into_response(),
     }

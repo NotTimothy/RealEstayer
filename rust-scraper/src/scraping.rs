@@ -36,7 +36,7 @@ pub async fn get_place_urls(driver: &WebDriver, location: &str) -> Result<Vec<St
     let semaphore = Arc::new(Semaphore::new(MAX_CONCURRENT_SCRAPES));
 
     loop {
-        sleep(Duration::from_secs(5)).await;
+        sleep(Duration::from_secs(8)).await;
 
         let places = driver.find_all(By::ClassName("atm_7l_1j28jx2")).await?;
         let mut tasks: FuturesUnordered<_> = places.into_iter().map(|place| {
@@ -63,15 +63,13 @@ pub async fn get_place_urls(driver: &WebDriver, location: &str) -> Result<Vec<St
             Ok(next_button) => {
                 if next_button.is_clickable().await? {
                     next_button.click().await?;
-                    sleep(Duration::from_secs(5)).await;
+                    // Increase wait time after pagination
+                    sleep(Duration::from_secs(10)).await;
                 } else {
                     break;
                 }
             }
-            Err(_) => {
-                log::info!("Reached the last page or no more results");
-                break;
-            }
+            Err(_) => break,
         }
     }
 
@@ -209,7 +207,11 @@ pub async fn scrape_place_details(driver: &WebDriver, url: &str) -> Result<Listi
     // Ensure we have a full URL before navigating
     let full_url = construct_full_url(url);
     driver.goto(&full_url).await?;
-    sleep(Duration::from_secs(5)).await;
+    // Increase page load wait time
+    sleep(Duration::from_secs(8)).await;
+
+    // Add random delay variation to avoid detection
+    sleep(Duration::from_millis(fastrand::u64(1000..3000))).await;
 
     let listing = Listing {
         id: None,
